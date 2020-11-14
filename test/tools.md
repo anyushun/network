@@ -9,8 +9,9 @@
 
 下面就整理Linux环境中常见的网络性能测试工具和各工具的重点测试指标：
 
+
 | 工具名称 | 充当角色 | 测试指标 | 说明 | 配合工具 | 特殊限制 |
-| --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- |
 | [iperf3](https://iperf.fr/) | Server、Client | 带宽 | 既可以作为TCP/SCTP/UDP Server，又可以作为TCP/SCTP/UDP Client | 无论作为Server还是作为Client，一般都只跟iperf3配合测试 | 最大并发连接数128 |
 | [nginx](http://nginx.org/en/docs/) | Server | - | 作为HTTP Server，处理Client的请求，以此来测试Server跟Client中间被测设备的性能 | ab、wrk | - |
 | [ab](http://httpd.apache.org/docs/2.4/programs/ab.html) | Client | RPS等 | Apache Benchmark的缩写，用于测试HTTP相关性能 | httpd、nginx等HTTP Server | - |
@@ -18,3 +19,18 @@
 | [wrk](https://github.com/wg/wrk) | Client | HTTP性能测试工具 | httpd、nginx等HTTP Server | - | - |
 | [netserver](http://www.netperf.org/) | Server | 重点是TCP/UDP批量数据传输请求和响应性能和Berkeley Sockets接口，还可以将DLPI、UDS、ipv6的特性编译进来 | netperf | - | - |
 | [netperf](http://www.netperf.org/) | Client | 参考netserver | netserver | - | - |
+
+# 常见性能指标和测试方法举例
+## 带宽
+- *测试工具*：
+    - *server*： iperf3
+    - *client*： iperf3
+- *测试方法*：
+    1. 在server机器中启动iperf3服务器：```iperf3 -s -D -V -i 0 --logfile server.log```
+    2. 分别指定不同的数据包大小进行测试：```iperf3 -c ${server ip} -p ${port} -n ${总传输字节数} -l ${单包大小} -b ${理论带宽} -V -i 0 --logfile client.log```
+    3. 统计测试结果：主要是带宽、重传数据包、CPU利用率、内存使用情况等
+
+## 最大连接数
+
+
+## RPS/QPS

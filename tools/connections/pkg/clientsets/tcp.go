@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"net-tools/pkg/counter"
+	"net-tools/pkg/utils"
 )
 
 type tcpClientSetConfig struct {
 	parallel        int
 	addr            string
-	body            string
+	packageSize     int
 	packageInterval time.Duration
 }
 
@@ -24,8 +25,8 @@ var tcsc = &tcpClientSetConfig{}
 func init() {
 	flag.IntVar(&tcsc.parallel, "tcp-parallel", 1, "how many tcp connections to server")
 	flag.StringVar(&tcsc.addr, "tcp-address", ":9090", "tcp server address connect to")
-	flag.StringVar(&tcsc.body, "tcp-body", "hello", "body send to server")
-	flag.DurationVar(&tcsc.packageInterval, "package-interval", time.Second, "interval of packages")
+	flag.IntVar(&tcsc.packageSize, "tcp-package-size", 64, "package send to server in bytes")
+	flag.DurationVar(&tcsc.packageInterval, "tcp-package-interval", time.Second, "interval of packages")
 }
 
 // TCPClientSet impl
@@ -56,14 +57,14 @@ func (tcs *TCPClientSet) handleConn() {
 		case <-tcs.ctx.Done():
 			return
 		default:
-			_, err := conn.Write([]byte(tcsc.body))
+			_, err := conn.Write(utils.RandonBytes(tcsc.packageSize))
 			if err != nil {
 				tcs.connections.Sub(1)
 				conn.Close()
 				return
 			}
 			tcs.packages.Add(1)
-			tcs.bytes.Add(float64(len(tcsc.body)))
+			tcs.bytes.Add(float64(tcsc.packageSize))
 			time.Sleep(tcsc.packageInterval)
 		}
 	}

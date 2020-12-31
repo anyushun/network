@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net-tools/pkg/counter"
+	"net-tools/pkg/utils"
 	"net/http"
 	"sync"
 )
@@ -13,15 +14,15 @@ import (
 type httpConfig struct {
 	addr               string
 	responseStatusCode int
-	responseBody       string
+	responseBodySize   int
 }
 
 var hc = &httpConfig{}
 
 func init() {
-	flag.StringVar(&hc.addr, "http-address", "0.0.0.0:8080", "address http server listen on")
-	flag.IntVar(&hc.responseStatusCode, "http-code", http.StatusOK, "http response code")
-	flag.StringVar(&hc.responseBody, "http-body", "hello world", "http response body")
+	flag.StringVar(&hc.addr, "http-listen-address", "0.0.0.0:8080", "address http server listen on")
+	flag.IntVar(&hc.responseStatusCode, "http-response-code", http.StatusOK, "http response status code")
+	flag.IntVar(&hc.responseBodySize, "http-response-body-size", 64, "http response body size")
 }
 
 // HTTPServer struct
@@ -57,10 +58,10 @@ func (hs *HTTPServer) Start() error {
 				w.Write([]byte(err.Error()))
 			}
 			hs.requests.Add(1)
-			hs.sendBytes.Add(float64(len(hc.responseBody)))
+			hs.sendBytes.Add(float64(hc.responseBodySize))
 			hs.receiveBytes.Add(float64(len(body)))
 			w.WriteHeader(hc.responseStatusCode)
-			w.Write([]byte(hc.responseBody))
+			w.Write([]byte(utils.RandonBytes(hc.responseBodySize)))
 		}),
 	}
 	go hs.server.ListenAndServe()

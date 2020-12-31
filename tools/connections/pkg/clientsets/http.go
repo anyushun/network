@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"net-tools/pkg/counter"
+	"net-tools/pkg/utils"
 )
 
 type httpClientSetConfig struct {
@@ -20,7 +21,7 @@ type httpClientSetConfig struct {
 	requestTimeout  time.Duration
 	requestURL      string
 	requestMethod   string
-	requestBody     string
+	requestBodySize int
 }
 
 var hcsc = &httpClientSetConfig{}
@@ -31,7 +32,7 @@ func init() {
 	flag.DurationVar(&hcsc.requestTimeout, "http-request-timeout", time.Second, "http request timeout")
 	flag.StringVar(&hcsc.requestURL, "http-request-url", "http://127.0.0.1:8080/", "http request url")
 	flag.StringVar(&hcsc.requestMethod, "http-request-method", http.MethodPost, "http request method")
-	flag.StringVar(&hcsc.requestBody, "http-request-body", "hello, http server", "http request body")
+	flag.IntVar(&hcsc.requestBodySize, "http-request-body-size", 64, "http request body size")
 }
 
 // HTTPClientSet impl
@@ -61,7 +62,8 @@ func (hcs *HTTPClientSet) handleClient() {
 		case <-hcs.ctx.Done():
 			return
 		default:
-			request, err := http.NewRequest(hcsc.requestMethod, hcsc.requestURL, strings.NewReader(hcsc.requestBody))
+			requestBody := utils.RandomString(hcsc.requestBodySize)
+			request, err := http.NewRequest(hcsc.requestMethod, hcsc.requestURL, strings.NewReader(requestBody))
 			if err != nil {
 				log.Panicln(err)
 			}
@@ -77,8 +79,9 @@ func (hcs *HTTPClientSet) handleClient() {
 			}
 			resp.Body.Close()
 			hcs.requests.Add(1)
-			hcs.sendBytes.Add(float64(len(hcsc.requestBody)))
+			hcs.sendBytes.Add(float64(hcsc.requestBodySize))
 			hcs.receiveBytes.Add(float64(len(body)))
+			time.Sleep(hcsc.requestInterval)
 		}
 	}
 }
